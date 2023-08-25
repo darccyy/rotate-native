@@ -9,11 +9,23 @@ use ggez::input::keyboard::KeyMods;
 use ggez::miniquad::GraphicsContext;
 use ggez::Context;
 use ggez::GameResult;
-use good_web_game::graphics::Transform;
-use good_web_game::mint::{Point2, Vector2};
+use good_web_game::mint::Point2;
 
 use crate::color;
 use crate::debug::draw_debug_text;
+
+const COLORS: &[Color] = &[
+    color!(RED),
+    color!(GREEN),
+    color!(BLUE),
+    color!(CYAN),
+    color!(YELLOW),
+    color!(MAGENTA),
+];
+const WIDTH: f32 = 3.0;
+const HEIGHT: f32 = 30.0;
+const SPEED_EXPONENT: f32 = 1.3;
+const SPEED_MULTIPLY: f32 = 0.01;
 
 #[derive(Default)]
 pub struct App {
@@ -25,6 +37,13 @@ impl App {
     pub fn new(_ctx: &mut Context, _quad_ctx: &mut GraphicsContext) -> GameResult<Self> {
         Ok(Self::default())
     }
+}
+
+#[derive(Clone, Copy, Default)]
+struct Arm {
+    width: f32,
+    length: f32,
+    rotation: f32,
 }
 
 impl EventHandler for App {
@@ -42,12 +61,11 @@ impl EventHandler for App {
             y: canvas.height() as f32 / 2.0,
         };
 
-        #[derive(Clone, Copy, Default)]
-        struct Arm {
-            width: f32,
-            length: f32,
-            rotation: f32,
-        }
+        //TODO Make faster!
+        //     - Remove closure
+        //     - Use for loop instead
+        //     - Mutable position value
+        //     - Calculate each trig once
 
         let mut draw_arm = |child: Arm, ancestors: &[Arm], color: Color| -> GameResult<()> {
             let mut point = center;
@@ -101,27 +119,18 @@ impl EventHandler for App {
             Ok(())
         };
 
-        let colors = [
-            color!(RED),
-            color!(GREEN),
-            color!(BLUE),
-            color!(CYAN),
-            color!(YELLOW),
-            color!(MAGENTA),
-        ];
-
         let mut ancestors = Vec::new();
-        for (i, color) in colors.into_iter().enumerate() {
-            let alpha = (colors.len() - i) as f32;
+        for (i, color) in COLORS.into_iter().enumerate() {
+            let alpha = (COLORS.len() - i) as f32;
             let omega = (i + 1) as f32;
 
             let arm = Arm {
-                width: alpha * 3.0,
-                length: alpha * 30.0,
-                rotation: self.frame_count as f32 * omega.powf(1.3) / 100.0,
+                width: alpha * WIDTH,
+                length: alpha * HEIGHT,
+                rotation: self.frame_count as f32 * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY,
             };
 
-            draw_arm(arm, &ancestors, color)?;
+            draw_arm(arm, &ancestors, *color)?;
             ancestors.push(arm);
         }
 
