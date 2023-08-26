@@ -24,10 +24,15 @@ const COLORS: &[Color] = &[
     color!(YELLOW),
     color!(MAGENTA),
 ];
+
 /// Width multiplier for arms
-const WIDTH: f32 = 3.0;
-/// Height multiplier for arms
-const HEIGHT: f32 = 30.0;
+const WIDTH_MULTIPLY: f32 = 3.0;
+/// Width minimum for arms
+const WIDTH_MINIMUM: f32 = 2.0;
+/// Length multiplier for arms
+const LENGTH_MULTIPLY: f32 = 20.0;
+/// Length multiplier for arms
+const LENGTH_MINIMUM: f32 = 10.0;
 /// Speed of arm rotation (exponential shape)
 const SPEED_EXPONENT: f32 = 1.3;
 /// Speed of arm rotation (multiplier)
@@ -41,6 +46,7 @@ pub struct App {
 }
 
 impl App {
+    /// Create new app state (default)
     pub fn new(_ctx: &mut Context, _quad_ctx: &mut GraphicsContext) -> GameResult<Self> {
         Ok(Self::default())
     }
@@ -71,8 +77,8 @@ impl EventHandler for App {
             let omega = (i + 1) as f32;
 
             // Arm properties
-            let width = alpha * WIDTH;
-            let length = alpha * HEIGHT;
+            let width = alpha * WIDTH_MULTIPLY + WIDTH_MINIMUM;
+            let length = alpha * LENGTH_MULTIPLY + LENGTH_MINIMUM;
             let rotation = self.frame_count as f32 * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY;
 
             // Points for arm line
