@@ -4,8 +4,7 @@ use ggez::event::EventHandler;
 use ggez::graphics;
 use ggez::graphics::Color;
 use ggez::graphics::{DrawMode, DrawParam};
-use ggez::input::keyboard::KeyMods;
-use ggez::input::keyboard::{KeyCode, KeyInput};
+use ggez::input::keyboard::{KeyCode, KeyInput, KeyMods};
 use ggez::mint::Point2;
 use ggez::Context;
 use ggez::GameResult;
@@ -111,9 +110,14 @@ impl EventHandler for App {
     }
 
     fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, _repeat: bool) -> GameResult {
+        use KeyCode::*;
+
         match (input.mods, input.keycode) {
             // Toggle debug mode
-            (KeyMods::NONE, Some(KeyCode::F3)) => self.show_debug ^= true,
+            (KeyMods::NONE, Some(F3)) => self.show_debug ^= true,
+
+            // Exit program
+            (_, Some(Escape | Space)) => std::process::exit(0),
 
             _ => (),
         }

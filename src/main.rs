@@ -39,8 +39,8 @@ fn main() -> GameResult {
     // Change window properties
     ctx.gfx.set_window_title("Rotating Arms");
     ctx.gfx.set_mode(WindowMode {
-        width: 1600.0,
-        height: 900.0,
+        width: 1680.0,
+        height: 1050.0,
         fullscreen_type: FullscreenType::True,
         ..Default::default()
     })?;
