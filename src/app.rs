@@ -4,12 +4,11 @@ use ggez::event::EventHandler;
 use ggez::graphics;
 use ggez::graphics::Color;
 use ggez::graphics::{DrawMode, DrawParam};
-use ggez::input::keyboard::KeyCode;
 use ggez::input::keyboard::KeyMods;
-use ggez::miniquad::GraphicsContext;
+use ggez::input::keyboard::{KeyCode, KeyInput};
+use ggez::mint::Point2;
 use ggez::Context;
 use ggez::GameResult;
-use good_web_game::mint::Point2;
 
 use crate::color;
 use crate::debug::draw_debug_text;
@@ -45,24 +44,17 @@ pub struct App {
     show_debug: bool,
 }
 
-impl App {
-    /// Create new app state (default)
-    pub fn new(_ctx: &mut Context, _quad_ctx: &mut GraphicsContext) -> GameResult<Self> {
-        Ok(Self::default())
-    }
-}
-
 impl EventHandler for App {
-    fn update(&mut self, _ctx: &mut Context, _quad_ctx: &mut GraphicsContext) -> GameResult {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
         self.frame_count += 1;
         Ok(())
     }
 
-    fn draw(&mut self, ctx: &mut Context, quad_ctx: &mut GraphicsContext) -> GameResult {
-        graphics::clear(ctx, quad_ctx, color!(BLACK));
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        let mut canvas = graphics::Canvas::from_frame(ctx, color!(BLACK));
 
         // Get canvas size
-        let (width, height) = quad_ctx.screen_size();
+        let (width, height) = ctx.gfx.drawable_size();
 
         // Center of canvas
         let mut point = Point2 {
@@ -87,65 +79,45 @@ impl EventHandler for App {
             let param = DrawParam::new().dest(point).rotation(rotation - PI / 2.0);
 
             // Draw arm line
-            let mesh = graphics::MeshBuilder::new()
-                .line(&points, width, *color)?
-                .build(ctx, quad_ctx)?;
-            graphics::draw(ctx, quad_ctx, &mesh, param)?;
+            let mesh = graphics::Mesh::new_line(ctx, &points, width, *color)?;
+            canvas.draw(&mesh, param);
+            // graphics::draw(ctx, &mesh, param)?;
 
             // Draw circle (line cap) at start of arm
-            let mesh = graphics::Mesh::new_circle(
-                ctx,
-                quad_ctx,
-                DrawMode::fill(),
-                point,
-                width / 2.0,
-                0.1,
-                *color,
-            )?;
-            graphics::draw(ctx, quad_ctx, &mesh, DrawParam::default())?;
+            let mesh =
+                graphics::Mesh::new_circle(ctx, DrawMode::fill(), point, width / 2.0, 0.1, *color)?;
+            canvas.draw(&mesh, DrawParam::default());
 
             // Move point to end of arm
             point.x += length * rotation.cos();
             point.y += length * rotation.sin();
 
             // Draw circle (line cap) at end of arm
-            let mesh = graphics::Mesh::new_circle(
-                ctx,
-                quad_ctx,
-                DrawMode::fill(),
-                point,
-                width / 2.0,
-                0.1,
-                *color,
-            )?;
-            graphics::draw(ctx, quad_ctx, &mesh, DrawParam::default())?;
+            let mesh =
+                graphics::Mesh::new_circle(ctx, DrawMode::fill(), point, width / 2.0, 0.1, *color)?;
+            canvas.draw(&mesh, DrawParam::default());
         }
 
         // Display debug information
         if self.show_debug {
             draw_debug_text(
+                &mut canvas,
                 ctx,
-                quad_ctx,
                 [format!("Total frames: {}", self.frame_count)],
             )?;
         }
 
-        Ok(())
+        canvas.finish(ctx)
     }
 
-    fn key_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        _quad_ctx: &mut GraphicsContext,
-        keycode: KeyCode,
-        keymod: KeyMods,
-        _repeat: bool,
-    ) {
-        match (keymod, keycode) {
+    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, _repeat: bool) -> GameResult {
+        match (input.mods, input.keycode) {
             // Toggle debug mode
-            (KeyMods::NONE, KeyCode::F3) => self.show_debug ^= true,
+            (KeyMods::NONE, Some(KeyCode::F3)) => self.show_debug ^= true,
 
             _ => (),
         }
+
+        Ok(())
     }
 }

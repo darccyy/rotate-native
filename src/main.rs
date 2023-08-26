@@ -1,8 +1,9 @@
-extern crate good_web_game as ggez;
-
 mod app;
 mod debug;
 
+use ggez::conf::{FullscreenType, WindowMode};
+use ggez::event;
+use ggez::ContextBuilder;
 use ggez::GameResult;
 
 use app::App;
@@ -31,9 +32,22 @@ macro_rules! color {
     };
 }
 
-fn main() -> GameResult<()> {
-    // Start app
-    ggez::start(ggez::conf::Conf::default(), |mut context, quad_ctx| {
-        Box::new(App::new(&mut context, quad_ctx).unwrap())
-    })
+fn main() -> GameResult {
+    // Create app context
+    let (mut ctx, event_loop) = ContextBuilder::new("rotating-arms", "darcy").build()?;
+
+    // Change window properties
+    ctx.gfx.set_window_title("Rotating Arms");
+    ctx.gfx.set_mode(WindowMode {
+        width: 1600.0,
+        height: 900.0,
+        fullscreen_type: FullscreenType::True,
+        ..Default::default()
+    })?;
+
+    // Create app state
+    let app = App::default();
+
+    // Run game loop
+    event::run(ctx, event_loop, app);
 }
