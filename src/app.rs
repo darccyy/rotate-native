@@ -1,4 +1,5 @@
 use std::f32::consts::PI;
+use std::process::exit;
 
 use ggez::event::EventHandler;
 use ggez::graphics;
@@ -117,11 +118,21 @@ impl EventHandler for App {
             (KeyMods::NONE, Some(F3)) => self.show_debug ^= true,
 
             // Exit program
-            (_, Some(Escape | Space)) => std::process::exit(0),
+            (_, Some(Escape | Space)) => exit(0),
 
             _ => (),
         }
 
         Ok(())
+    }
+
+    fn mouse_button_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        _button: ggez::event::MouseButton,
+        _x: f32,
+        _y: f32,
+    ) -> Result<(), ggez::GameError> {
+        exit(0)
     }
 }
