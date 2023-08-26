@@ -18,9 +18,9 @@ const COLORS: &[Color] = &[
     color!(RED),
     color!(GREEN),
     color!(BLUE),
-    color!(CYAN),
-    color!(YELLOW),
-    color!(MAGENTA),
+    // color!(CYAN),
+    // color!(YELLOW),
+    // color!(MAGENTA),
 ];
 const WIDTH: f32 = 3.0;
 const HEIGHT: f32 = 30.0;
@@ -39,13 +39,6 @@ impl App {
     }
 }
 
-#[derive(Clone, Copy, Default)]
-struct Arm {
-    width: f32,
-    length: f32,
-    rotation: f32,
-}
-
 impl EventHandler for App {
     fn update(&mut self, _ctx: &mut Context, _quad_ctx: &mut GraphicsContext) -> GameResult {
         self.frame_count += 1;
@@ -56,84 +49,65 @@ impl EventHandler for App {
         graphics::clear(ctx, quad_ctx, color!(BLACK));
 
         let canvas = graphics::Canvas::with_window_size(ctx, quad_ctx)?;
-        let center = Point2 {
+
+        // Center of canvas
+        let mut point = Point2 {
             x: canvas.width() as f32 / 2.0,
             y: canvas.height() as f32 / 2.0,
         };
 
-        //TODO Make faster!
-        //     - Remove closure
-        //     - Use for loop instead
-        //     - Mutable position value
-        //     - Calculate each trig once
+        for (i, color) in COLORS.into_iter().enumerate() {
+            // Amount of arms from center, as float
+            let alpha = (COLORS.len() - i) as f32;
+            // Amount of arms from end, as float
+            let omega = (i + 1) as f32;
 
-        let mut draw_arm = |child: Arm, ancestors: &[Arm], color: Color| -> GameResult<()> {
-            let mut point = center;
-            for ancestor in ancestors {
-                point.x += ancestor.length * ancestor.rotation.cos();
-                point.y += ancestor.length * ancestor.rotation.sin();
-            }
+            // Arm properties
+            let width = alpha * WIDTH;
+            let length = alpha * HEIGHT;
+            let rotation = self.frame_count as f32 * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY;
 
-            let param = DrawParam::new()
-                .dest(point)
-                .rotation(child.rotation - PI / 2.0);
+            // Points for arm line
+            let points = [Point2 { x: 0.0, y: 0.0 }, Point2 { x: 0.0, y: length }];
+            // Use rotation transformation
+            let param = DrawParam::new().dest(point).rotation(rotation - PI / 2.0);
 
-            let points = [
-                Point2 { x: 0.0, y: 0.0 },
-                Point2 {
-                    x: 0.0,
-                    y: child.length,
-                },
-            ];
-
+            // Draw arm line
             let mesh = graphics::MeshBuilder::new()
-                .line(&points, child.width, color)?
+                .line(&points, width, *color)?
                 .build(ctx, quad_ctx)?;
             graphics::draw(ctx, quad_ctx, &mesh, param)?;
 
+            // Draw circle (line cap) at start of arm
             let mesh = graphics::Mesh::new_circle(
                 ctx,
                 quad_ctx,
                 DrawMode::fill(),
                 point,
-                child.width / 2.0,
+                width / 2.0,
                 0.1,
-                color,
+                *color,
             )?;
             graphics::draw(ctx, quad_ctx, &mesh, DrawParam::default())?;
 
-            point.x += child.length * child.rotation.cos();
-            point.y += child.length * child.rotation.sin();
+            // Move point to end of arm
+            point.x += length * rotation.cos();
+            point.y += length * rotation.sin();
 
+            // Draw circle (line cap) at end of arm
             let mesh = graphics::Mesh::new_circle(
                 ctx,
                 quad_ctx,
                 DrawMode::fill(),
                 point,
-                child.width / 2.0,
+                width / 2.0,
                 0.1,
-                color,
+                *color,
             )?;
             graphics::draw(ctx, quad_ctx, &mesh, DrawParam::default())?;
-
-            Ok(())
-        };
-
-        let mut ancestors = Vec::new();
-        for (i, color) in COLORS.into_iter().enumerate() {
-            let alpha = (COLORS.len() - i) as f32;
-            let omega = (i + 1) as f32;
-
-            let arm = Arm {
-                width: alpha * WIDTH,
-                length: alpha * HEIGHT,
-                rotation: self.frame_count as f32 * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY,
-            };
-
-            draw_arm(arm, &ancestors, *color)?;
-            ancestors.push(arm);
         }
 
+        // Display debug information
         if self.show_debug {
             draw_debug_text(
                 ctx,
