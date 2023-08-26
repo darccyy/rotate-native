@@ -7,6 +7,7 @@ use ggez::GameResult;
 
 use app::App;
 
+/// Returns `ggez::graphics::Color` value, as const
 #[macro_export]
 macro_rules! color {
     ($name:ident) => {
@@ -31,6 +32,7 @@ macro_rules! color {
 }
 
 fn main() -> GameResult<()> {
+    // Start app
     ggez::start(ggez::conf::Conf::default(), |mut context, quad_ctx| {
         Box::new(App::new(&mut context, quad_ctx).unwrap())
     })

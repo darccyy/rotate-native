@@ -14,19 +14,26 @@ use good_web_game::mint::Point2;
 use crate::color;
 use crate::debug::draw_debug_text;
 
+/// Arm colors to render
+/// Each color = one arm
 const COLORS: &[Color] = &[
     color!(RED),
     color!(GREEN),
     color!(BLUE),
-    // color!(CYAN),
-    // color!(YELLOW),
-    // color!(MAGENTA),
+    color!(CYAN),
+    color!(YELLOW),
+    color!(MAGENTA),
 ];
+/// Width multiplier for arms
 const WIDTH: f32 = 3.0;
+/// Height multiplier for arms
 const HEIGHT: f32 = 30.0;
+/// Speed of arm rotation (exponential shape)
 const SPEED_EXPONENT: f32 = 1.3;
+/// Speed of arm rotation (multiplier)
 const SPEED_MULTIPLY: f32 = 0.01;
 
+/// Main app
 #[derive(Default)]
 pub struct App {
     frame_count: u32,
@@ -48,18 +55,19 @@ impl EventHandler for App {
     fn draw(&mut self, ctx: &mut Context, quad_ctx: &mut GraphicsContext) -> GameResult {
         graphics::clear(ctx, quad_ctx, color!(BLACK));
 
-        let canvas = graphics::Canvas::with_window_size(ctx, quad_ctx)?;
+        // Get canvas size
+        let (width, height) = quad_ctx.screen_size();
 
         // Center of canvas
         let mut point = Point2 {
-            x: canvas.width() as f32 / 2.0,
-            y: canvas.height() as f32 / 2.0,
+            x: width / 2.0,
+            y: height / 2.0,
         };
 
         for (i, color) in COLORS.into_iter().enumerate() {
-            // Amount of arms from center, as float
+            // Arm count from center, as float
             let alpha = (COLORS.len() - i) as f32;
-            // Amount of arms from end, as float
+            // Arm count from end, as float
             let omega = (i + 1) as f32;
 
             // Arm properties
@@ -127,10 +135,10 @@ impl EventHandler for App {
         keymod: KeyMods,
         _repeat: bool,
     ) {
-        use KeyCode::*;
-
         match (keymod, keycode) {
-            (KeyMods::NONE, F3) => self.show_debug ^= true,
+            // Toggle debug mode
+            (KeyMods::NONE, KeyCode::F3) => self.show_debug ^= true,
+
             _ => (),
         }
     }

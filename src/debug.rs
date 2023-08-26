@@ -1,54 +1,60 @@
-use ggez::graphics::TextFragment;
-use ggez::cgmath::Point2;
-use ggez::graphics;
-use ggez::graphics::DrawMode;
-use ggez::graphics::DrawParam;
-use ggez::miniquad;
-use ggez::Context;
-use ggez::GameResult;
+use ggez::{
+    cgmath::Point2,
+    graphics::{self, Color, DrawMode, DrawParam, TextFragment},
+    miniquad, Context, GameResult,
+};
 
 use crate::color;
 
+/// Margin for bounding rectangle
+const MARGIN: f32 = 20.0;
+/// Padding for text inside rectangle
+const PADDING: f32 = 8.0;
+/// Text line height
+const LINE_HEIGHT: f32 = 5.0;
+/// Text font size
+const FONT_SIZE: f32 = 18.0;
+/// Text color
+const COLOR_TEXT: Color = color!(WHITE);
+/// Bounding rectangle color
+const COLOR_BG: Color = color!(128, 0, 0, 128);
+
+/// Render debug information on canvas
 pub fn draw_debug_text<const N: usize>(
     ctx: &mut Context,
     quad_ctx: &mut miniquad::GraphicsContext,
     lines: [impl Into<TextFragment>; N],
 ) -> GameResult {
+    // Skip if no debug lines
     if lines.is_empty() {
         return Ok(());
     }
 
+    // Get canvas size
     let (width, height) = quad_ctx.screen_size();
 
-    let margin = 20.0;
-    let padding = 8.0;
-    let line_height = 5.0;
-    let font_size = 18.0;
-
-    let text_color = color!(WHITE);
-    let background_color = color!(128, 0, 0, 128);
-
+    // Bounding rectangle properties
     let rect_height =
-        padding * 2.0 + font_size * lines.len() as f32 + line_height * (lines.len() as f32 - 1.0);
-    let rect_width = width - margin * 2.0;
-    let rect_x = margin;
-    let rect_y = height - margin - rect_height;
+        PADDING * 2.0 + FONT_SIZE * lines.len() as f32 + LINE_HEIGHT * (lines.len() as f32 - 1.0);
+    let rect_width = width - MARGIN * 2.0;
+    let rect_x = MARGIN;
+    let rect_y = height - MARGIN - rect_height;
 
+    // Draw bounding rectangle
     let rect = graphics::Rect::new(rect_x, rect_y, rect_width, rect_height);
-
-    let mesh =
-        graphics::Mesh::new_rectangle(ctx, quad_ctx, DrawMode::fill(), rect, background_color)?;
-
+    let mesh = graphics::Mesh::new_rectangle(ctx, quad_ctx, DrawMode::fill(), rect, COLOR_BG)?;
     graphics::draw(ctx, quad_ctx, &mesh, DrawParam::default())?;
 
+    // Draw each line
     for (i, line) in lines.into_iter().enumerate() {
+        // Get position from rectangle properties
         let position = Point2::new(
-            rect_x + padding,
-            rect_y + padding + (font_size + line_height) * i as f32,
+            rect_x + PADDING,
+            rect_y + PADDING + (FONT_SIZE + LINE_HEIGHT) * i as f32,
         );
-        let text = graphics::Text::new((line, graphics::Font::default(), font_size));
-
-        graphics::draw(ctx, quad_ctx, &text, (position, 0.0, text_color))?;
+        // Draw text
+        let text = graphics::Text::new((line, graphics::Font::default(), FONT_SIZE));
+        graphics::draw(ctx, quad_ctx, &text, (position, 0.0, COLOR_TEXT))?;
     }
     Ok(())
 }
