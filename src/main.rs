@@ -42,6 +42,8 @@ fn main() -> GameResult {
         width: 1680.0,
         height: 1050.0,
         fullscreen_type: FullscreenType::True,
+        // maximized: true,
+        // borderless: true,
         ..Default::default()
     })?;
 

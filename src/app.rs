@@ -1,4 +1,3 @@
-use std::f32::consts::PI;
 use std::process::exit;
 
 use ggez::event::EventHandler;
@@ -25,9 +24,9 @@ const COLORS: &[Color] = &[
 ];
 
 /// Width multiplier for arms
-const WIDTH_MULTIPLY: f32 = 3.0;
+const WIDTH_MULTIPLY: f32 = 2.0;
 /// Width minimum for arms
-const WIDTH_MINIMUM: f32 = 2.0;
+const WIDTH_MINIMUM: f32 = 4.0;
 /// Length multiplier for arms
 const LENGTH_MULTIPLY: f32 = 20.0;
 /// Length multiplier for arms
@@ -35,7 +34,7 @@ const LENGTH_MINIMUM: f32 = 10.0;
 /// Speed of arm rotation (exponential shape)
 const SPEED_EXPONENT: f32 = 1.3;
 /// Speed of arm rotation (multiplier)
-const SPEED_MULTIPLY: f32 = 0.01;
+const SPEED_MULTIPLY: f32 = 1.0;
 
 /// Main app
 #[derive(Default)]
@@ -62,6 +61,10 @@ impl EventHandler for App {
             y: height / 2.0,
         };
 
+        // Calculate base rotation speed from frame
+        let rotation_base = self.frame_count as f32 / 100.0;
+
+        // Render each arm
         for (i, color) in COLORS.into_iter().enumerate() {
             // Arm count from center, as float
             let alpha = (COLORS.len() - i) as f32;
@@ -71,31 +74,39 @@ impl EventHandler for App {
             // Arm properties
             let width = alpha * WIDTH_MULTIPLY + WIDTH_MINIMUM;
             let length = alpha * LENGTH_MULTIPLY + LENGTH_MINIMUM;
-            let rotation = self.frame_count as f32 * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY;
+            let rotation = rotation_base * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY;
 
-            // Points for arm line
-            let points = [Point2 { x: 0.0, y: 0.0 }, Point2 { x: 0.0, y: length }];
-            // Use rotation transformation
-            let param = DrawParam::new().dest(point).rotation(rotation - PI / 2.0);
+            // Calculate point of end of arm
+            let next_point = Point2 {
+                x: point.x + length * rotation.cos(),
+                y: point.y + length * rotation.sin(),
+            };
 
             // Draw arm line
-            let mesh = graphics::Mesh::new_line(ctx, &points, width, *color)?;
-            canvas.draw(&mesh, param);
-            // graphics::draw(ctx, &mesh, param)?;
-
-            // Draw circle (line cap) at start of arm
-            let mesh =
-                graphics::Mesh::new_circle(ctx, DrawMode::fill(), point, width / 2.0, 0.1, *color)?;
+            let mesh = graphics::Mesh::new_line(ctx, &[point, next_point], width, *color)?;
             canvas.draw(&mesh, DrawParam::default());
 
-            // Move point to end of arm
-            point.x += length * rotation.cos();
-            point.y += length * rotation.sin();
+            /// Inline macro to draw circle at a point
+            macro_rules! draw_circle {
+                ($point: expr) => {{
+                    let mesh = graphics::Mesh::new_circle(
+                        ctx,
+                        DrawMode::fill(),
+                        $point,
+                        width / 2.0,
+                        0.1,
+                        *color,
+                    )?;
+                    canvas.draw(&mesh, DrawParam::default());
+                }};
+            }
 
-            // Draw circle (line cap) at end of arm
-            let mesh =
-                graphics::Mesh::new_circle(ctx, DrawMode::fill(), point, width / 2.0, 0.1, *color)?;
-            canvas.draw(&mesh, DrawParam::default());
+            // Draw circle (line cap) at each end of arm
+            draw_circle!(point);
+            draw_circle!(next_point);
+
+            // Update position for next arm
+            point = next_point;
         }
 
         // Display debug information
