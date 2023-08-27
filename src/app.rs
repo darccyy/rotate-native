@@ -66,15 +66,15 @@ impl EventHandler for App {
 
         // Render each arm
         for (i, color) in COLORS.into_iter().enumerate() {
-            // Arm count from center, as float
-            let alpha = (COLORS.len() - i) as f32;
             // Arm count from end, as float
-            let omega = (i + 1) as f32;
+            let alpha = (i + 1) as f32;
+            // Arm count from center, as float
+            let omega = (COLORS.len() - i) as f32;
 
             // Arm properties
-            let width = alpha * WIDTH_MULTIPLY + WIDTH_MINIMUM;
-            let length = alpha * LENGTH_MULTIPLY + LENGTH_MINIMUM;
-            let rotation = rotation_base * omega.powf(SPEED_EXPONENT) * SPEED_MULTIPLY;
+            let width = omega * WIDTH_MULTIPLY + WIDTH_MINIMUM;
+            let length = omega * LENGTH_MULTIPLY + LENGTH_MINIMUM;
+            let rotation = rotation_base * alpha.powf(SPEED_EXPONENT) * SPEED_MULTIPLY;
 
             // Calculate point of end of arm
             let next_point = Point2 {
