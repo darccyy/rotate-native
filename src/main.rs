@@ -41,6 +41,7 @@ fn main() -> GameResult {
     ctx.gfx.set_mode(WindowMode {
         width: 1680.0,
         height: 1050.0,
+        resizable: true,
         fullscreen_type: FullscreenType::True,
         // maximized: true,
         // borderless: true,

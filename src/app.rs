@@ -114,7 +114,13 @@ impl EventHandler for App {
             draw_debug_text(
                 &mut canvas,
                 ctx,
-                [format!("Total frames: {}", self.frame_count)],
+                [
+                    format!("Frames rendered: {}", self.frame_count),
+                    format!("Arm count: {}", COLORS.len()),
+                    format!("Arm width: {} * x + {}", WIDTH_MULTIPLY, WIDTH_MINIMUM),
+                    format!("Arm length: {} * x + {}", LENGTH_MULTIPLY, LENGTH_MINIMUM),
+                    format!("Rotation speed: {} * x ^ {}", SPEED_MULTIPLY, SPEED_EXPONENT),
+                ],
             )?;
         }
 
