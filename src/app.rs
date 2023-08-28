@@ -5,6 +5,7 @@ use ggez::graphics;
 use ggez::graphics::Color;
 use ggez::graphics::{DrawMode, DrawParam};
 use ggez::input::keyboard::{KeyCode, KeyInput, KeyMods};
+use ggez::input::mouse;
 use ggez::mint::Point2;
 use ggez::Context;
 use ggez::GameResult;
@@ -35,21 +36,29 @@ const LENGTH_MINIMUM: f32 = 10.0;
 const SPEED_EXPONENT: f32 = 1.3;
 /// Speed of arm rotation (multiplier)
 const SPEED_MULTIPLY: f32 = 1.0;
+/// Speed of manual rotation with arrow keys
+const MANUAL_SPEED: i32 = 15;
 
 /// Main app
 #[derive(Default)]
 pub struct App {
-    frame_count: u32,
+    rotation: i32,
+    paused: bool,
     show_debug: bool,
 }
 
 impl EventHandler for App {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        self.frame_count += 1;
+        if !self.paused {
+            self.rotation += 1;
+        }
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        // Hide cursor
+        mouse::set_cursor_hidden(ctx, true);
+
         let mut canvas = graphics::Canvas::from_frame(ctx, color!(BLACK));
 
         // Get canvas size
@@ -62,7 +71,7 @@ impl EventHandler for App {
         };
 
         // Calculate base rotation speed from frame
-        let rotation_base = self.frame_count as f32 / 100.0;
+        let rotation_base = self.rotation as f32 / 100.0;
 
         // Render each arm
         for (i, color) in COLORS.into_iter().enumerate() {
@@ -115,11 +124,15 @@ impl EventHandler for App {
                 &mut canvas,
                 ctx,
                 [
-                    format!("Frames rendered: {}", self.frame_count),
+                    format!("Rotation value: {}", self.rotation),
+                    format!("Paused?: {}", self.paused),
                     format!("Arm count: {}", COLORS.len()),
-                    format!("Arm width: {} * x + {}", WIDTH_MULTIPLY, WIDTH_MINIMUM),
-                    format!("Arm length: {} * x + {}", LENGTH_MULTIPLY, LENGTH_MINIMUM),
-                    format!("Rotation speed: {} * x ^ {}", SPEED_MULTIPLY, SPEED_EXPONENT),
+                    format!("Arm width: {} * a + {}", WIDTH_MULTIPLY, WIDTH_MINIMUM),
+                    format!("Arm length: {} * a + {}", LENGTH_MULTIPLY, LENGTH_MINIMUM),
+                    format!(
+                        "Rotation speed: {} * a ^ {}",
+                        SPEED_MULTIPLY, SPEED_EXPONENT
+                    ),
                 ],
             )?;
         }
@@ -131,11 +144,18 @@ impl EventHandler for App {
         use KeyCode::*;
 
         match (input.mods, input.keycode) {
+            // Exit program
+            (_, Some(Escape | Q)) => exit(0),
+
             // Toggle debug mode
             (KeyMods::NONE, Some(F3)) => self.show_debug ^= true,
 
-            // Exit program
-            (_, Some(Escape | Space)) => exit(0),
+            // Toggle pause
+            (KeyMods::NONE, Some(Space)) => self.paused ^= true,
+
+            // Change rotation manually
+            (KeyMods::NONE, Some(Left)) => self.rotation -= MANUAL_SPEED,
+            (KeyMods::NONE, Some(Right)) => self.rotation += MANUAL_SPEED,
 
             _ => (),
         }
